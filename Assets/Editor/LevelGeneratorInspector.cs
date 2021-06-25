@@ -20,7 +20,8 @@ public class LevelGeneratorInspector : Editor {
         EditorGUILayout.PropertyField(serializedObject.FindProperty("AqueductPrefab2WayCorner"), true);
         EditorGUILayout.PropertyField(serializedObject.FindProperty("AqueductPrefab3Way"), true);
         EditorGUILayout.PropertyField(serializedObject.FindProperty("AqueductPrefab4Way"), true);
-        EditorGUILayout.PropertyField(serializedObject.FindProperty("BuildingPrefabs"), true);
+        EditorGUILayout.PropertyField(serializedObject.FindProperty("SmallBuildingPrefabs"), true);
+        EditorGUILayout.PropertyField(serializedObject.FindProperty("LargeBuildingPrefabs"), true);
         
         EditorGUILayout.PropertyField(serializedObject.FindProperty("FloorParentTransform"), true);
         EditorGUILayout.PropertyField(serializedObject.FindProperty("AqueductParentTransform"), true);

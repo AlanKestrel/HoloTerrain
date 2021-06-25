@@ -21,7 +21,8 @@ public class LevelGenerator : MonoBehaviour {
     public GameObject AqueductPrefab3Way;
     public GameObject AqueductPrefab4Way;
     public GameObject PillarPrefab;
-    public List<GameObject> BuildingPrefabs;
+    public List<GameObject> SmallBuildingPrefabs;
+    public List<GameObject> LargeBuildingPrefabs;
     
     public Transform FloorParentTransform;
     public Transform AqueductParentTransform;
@@ -54,7 +55,8 @@ public class LevelGenerator : MonoBehaviour {
         MakeAqueduct();
         MakeFloor();
         MakePillars();
-        MakeBuildings();
+        MakeLargeBuildings();
+        MakeSmallBuildings();
         
         Debug.Log(string.Format("Generated level in {0} ms. World size: {1}x{1}",
             stopWatch.ElapsedMilliseconds, MapTileWidth * TileWorldSize
@@ -292,17 +294,17 @@ public class LevelGenerator : MonoBehaviour {
     }
     
     //------------------------------------------------------------------------------------------------------------------
-    private void MakeBuildings() {
+    private void MakeSmallBuildings() {
         for (int x = 0; x < MapTileWidth; x++) {
             for (int z = 0; z < MapTileWidth; z++) {
-                if (tiles[x, z].isPit || tiles[x, z].isPillar || Random.Range(0f, 1f) > buildingChance
-                    || HasAdjacentBuildings(x, z)) {
+                if (tiles[x, z].isPit || tiles[x, z].isPillar || tiles[x, z].isBuilding
+                    || Random.Range(0f, 1f) > buildingChance || HasAdjacentBuildings(x, z)) {
                     
                     continue;
                 }
                 
                 GameObject newObj = PrefabUtility.InstantiatePrefab(
-                    BuildingPrefabs[Random.Range(0, BuildingPrefabs.Count)], BuildingParentTransform
+                    SmallBuildingPrefabs[Random.Range(0, SmallBuildingPrefabs.Count)], BuildingParentTransform
                 ) as GameObject;
                 newObj.name = "Building (" + (x + 1) + "," + (z + 1) + ")";
                 newObj.transform.position = new Vector3(x * TileWorldSize, 0, z * TileWorldSize);
@@ -328,5 +330,55 @@ public class LevelGenerator : MonoBehaviour {
         }
         
         return false;
+    }
+    
+    //------------------------------------------------------------------------------------------------------------------
+    private void MakeLargeBuildings() {
+        int minLargeBuildingCount = 1;
+        int maxLargeBuildingCount = 2;
+        int largeBuildingCount = Random.Range(minLargeBuildingCount, maxLargeBuildingCount + 1);
+
+        for (int i = 0; i < largeBuildingCount; i++) {
+            // make a list of sites where we could build large buildings
+            List<Vector2> possibleSites = new List<Vector2>();
+            List<Vector2> offsetCoords = new List<Vector2> { Vector2.zero, Vector2.right, Vector2.up, Vector2.right + Vector2.up };
+        
+            for (int x = 0; x < MapTileWidth - 1; x++) {
+                for (int z = 0; z < MapTileWidth - 1; z++) {
+                    bool isClear = true;
+                    foreach (Vector2 offsetCoord in offsetCoords) {
+                        TerrainTile tile = tiles[x + (int)offsetCoord.x, z + (int)offsetCoord.y];
+                        if (tile.isBuilding || tile.isPillar || tile.isPit) {
+                            isClear = false;
+                            break;
+                        }
+                    }
+                    if (isClear) {
+                        possibleSites.Add(new Vector2(x, z));
+                    }
+                }
+            }
+
+            // verify we have at least 1 possible building site
+            if (possibleSites.Count == 0) {
+                return;
+            }
+            
+            // instantiate the building on a random possible site
+            Vector2 randomSite = possibleSites[Random.Range(0, possibleSites.Count)];
+            int siteX = (int)randomSite.x;
+            int siteZ = (int)randomSite.y;
+            GameObject newObj = PrefabUtility.InstantiatePrefab(
+                LargeBuildingPrefabs[Random.Range(0, LargeBuildingPrefabs.Count)], BuildingParentTransform
+            ) as GameObject;
+            newObj.name = "Large Building (" + (siteX + 1) + "," + (siteZ + 1) + ")";
+            newObj.transform.position = new Vector3(siteX * TileWorldSize, 0, siteZ * TileWorldSize);
+            newObj.GetComponent<TerrainObject>().ModelPivot.Rotate(Vector3.up, Random.Range(0, 4) * 90f);
+        
+            // mark all tiles used by this site
+            foreach (Vector2 offsetCoord in offsetCoords) {
+                tiles[siteX + (int) offsetCoord.x, siteZ + (int) offsetCoord.y].isBuilding = true;
+            }
+        }
     }
 }

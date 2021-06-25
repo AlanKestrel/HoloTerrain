@@ -12,17 +12,20 @@ public class LevelGeneratorInspector : Editor {
         EditorGUILayout.PropertyField(serializedObject.FindProperty("TileWorldSize"), true);
         EditorGUILayout.PropertyField(serializedObject.FindProperty("MapTileWidth"), true);
         
-        EditorGUILayout.PropertyField(serializedObject.FindProperty("StreetPrefab"), true);
+        EditorGUILayout.PropertyField(serializedObject.FindProperty("ThickFloorPrefab"), true);
+        EditorGUILayout.PropertyField(serializedObject.FindProperty("ThinFloorPrefab"), true);
         EditorGUILayout.PropertyField(serializedObject.FindProperty("PillarPrefab"), true);
         EditorGUILayout.PropertyField(serializedObject.FindProperty("AqueductPrefab1Way"), true);
         EditorGUILayout.PropertyField(serializedObject.FindProperty("AqueductPrefab2WayStraight"), true);
         EditorGUILayout.PropertyField(serializedObject.FindProperty("AqueductPrefab2WayCorner"), true);
         EditorGUILayout.PropertyField(serializedObject.FindProperty("AqueductPrefab3Way"), true);
         EditorGUILayout.PropertyField(serializedObject.FindProperty("AqueductPrefab4Way"), true);
+        EditorGUILayout.PropertyField(serializedObject.FindProperty("BuildingPrefabs"), true);
         
         EditorGUILayout.PropertyField(serializedObject.FindProperty("FloorParentTransform"), true);
         EditorGUILayout.PropertyField(serializedObject.FindProperty("AqueductParentTransform"), true);
         EditorGUILayout.PropertyField(serializedObject.FindProperty("PillarParentTransform"), true);
+        EditorGUILayout.PropertyField(serializedObject.FindProperty("BuildingParentTransform"), true);
             
         serializedObject.ApplyModifiedProperties();
             

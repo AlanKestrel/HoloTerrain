@@ -13,16 +13,20 @@ public class LevelGenerator : MonoBehaviour {
 
     public int TileWorldSize;
     public int MapTileWidth;
-    public GameObject StreetPrefab;
+    public GameObject ThickFloorPrefab;
+    public GameObject ThinFloorPrefab;
     public GameObject AqueductPrefab1Way;
     public GameObject AqueductPrefab2WayStraight;
     public GameObject AqueductPrefab2WayCorner;
     public GameObject AqueductPrefab3Way;
     public GameObject AqueductPrefab4Way;
     public GameObject PillarPrefab;
+    public List<GameObject> BuildingPrefabs;
+    
     public Transform FloorParentTransform;
     public Transform AqueductParentTransform;
     public Transform PillarParentTransform;
+    public Transform BuildingParentTransform;
 
     private TerrainTile[,] tiles;
     
@@ -31,6 +35,7 @@ public class LevelGenerator : MonoBehaviour {
     private const float aqueductBranchChance = 0.4f;
     private const float pitChance = 0.1f;
     private const float pillarChance = 0.3f;
+    private const float buildingChance = 0.15f;
     private readonly List<Vector2> cardinals = new List<Vector2> { Vector2.up, Vector2.down, Vector2.left, Vector2.right };
     
     //------------------------------------------------------------------------------------------------------------------
@@ -49,15 +54,18 @@ public class LevelGenerator : MonoBehaviour {
         MakeAqueduct();
         MakeFloor();
         MakePillars();
+        MakeBuildings();
         
-        Debug.Log(String.Format("Generated level in {0} ms. World size: {1}x{1}",
+        Debug.Log(string.Format("Generated level in {0} ms. World size: {1}x{1}",
             stopWatch.ElapsedMilliseconds, MapTileWidth * TileWorldSize
         ));
     }
     
     //------------------------------------------------------------------------------------------------------------------
     public void DestroyOldTerrain() {
-        List<Transform> oldParents = new List<Transform> { FloorParentTransform, AqueductParentTransform, PillarParentTransform };
+        List<Transform> oldParents = new List<Transform> {
+            FloorParentTransform, AqueductParentTransform, PillarParentTransform, BuildingParentTransform
+        };
 
         foreach (Transform oldParent in oldParents) {
             List<Transform> oldTiles = oldParent.transform.Cast<Transform>().ToList();
@@ -71,7 +79,9 @@ public class LevelGenerator : MonoBehaviour {
     //------------------------------------------------------------------------------------------------------------------
     private void MakeFloor() {
         int maxPitSize = 4;
+        int thinLinesPerDimension = 2;
         
+        // add random pits
         for (int tileX = 0; tileX < MapTileWidth; tileX++) {
             for (int tileZ = 0; tileZ < MapTileWidth; tileZ++) {
                 if (Random.Range(0f, 1f) < pitChance) {
@@ -84,20 +94,37 @@ public class LevelGenerator : MonoBehaviour {
                                 continue;
                             }
                             
-                            tiles[pitX, pitZ].hasPit = true;
+                            tiles[pitX, pitZ].isPit = true;
                         }
                     }
                 }
             }
         }
         
+        // make some floors thin
+        for (int i = 0; i < thinLinesPerDimension; i++) {
+            int thinRow = Random.Range(0, MapTileWidth);
+            for (int z = 0; z < MapTileWidth; z++) {
+                tiles[thinRow, z].isThinFloor = true;
+            }
+        }
+        for (int i = 0; i < thinLinesPerDimension; i++) {
+            int thinRow = Random.Range(0, MapTileWidth);
+            for (int x = 0; x < MapTileWidth; x++) {
+                tiles[x, thinRow].isThinFloor = true;
+            }
+        }
+        
+        // actually instantiate everything
         for (int x = 0; x < MapTileWidth; x++) {
             for (int z = 0; z < MapTileWidth; z++) {
-                if (tiles[x, z].hasPit) {
+                if (tiles[x, z].isPit) {
                     continue;
                 }
                 
-                GameObject newObj = PrefabUtility.InstantiatePrefab(StreetPrefab, FloorParentTransform) as GameObject;
+                GameObject newObj = PrefabUtility.InstantiatePrefab(
+                    tiles[x, z].isThinFloor ? ThinFloorPrefab : ThickFloorPrefab, FloorParentTransform
+                ) as GameObject;
                 newObj.name = "Floor (" + (x + 1) + "," + (z + 1) + ")";
                 newObj.transform.position = new Vector3(x * TileWorldSize, 0, z * TileWorldSize);
             }
@@ -114,7 +141,7 @@ public class LevelGenerator : MonoBehaviour {
             x = Random.Range(MapTileWidth / 3, MapTileWidth / 3 * 2),
             y = Random.Range(MapTileWidth / 3, MapTileWidth / 3 * 2)
         };
-        tiles[(int)startPoint.x, (int)startPoint.y].hasAqueduct = true;
+        tiles[(int)startPoint.x, (int)startPoint.y].isAqueduct = true;
         List<Vector2> branchPoints = new List<Vector2> { startPoint };
         List<Vector2> newBranches = new List<Vector2>();
 
@@ -131,12 +158,12 @@ public class LevelGenerator : MonoBehaviour {
                     for (int b = 1; b <= branchLength; b++) {
                         Vector2 cell = branchPoint + (cardinal * b);
                         // don't try to build outside the map space or through existing aqueducts 
-                        if (cell.x < 0 || cell.y < 0 || cell.x >= MapTileWidth || cell.y >= MapTileWidth || tiles[(int) cell.x, (int) cell.y].hasAqueduct) {
+                        if (cell.x < 0 || cell.y < 0 || cell.x >= MapTileWidth || cell.y >= MapTileWidth || tiles[(int) cell.x, (int) cell.y].isAqueduct) {
                             break;
                         }
                         
                         // build an aqueduct cell here 
-                        tiles[(int) cell.x, (int) cell.y].hasAqueduct = true;
+                        tiles[(int) cell.x, (int) cell.y].isAqueduct = true;
 
                         // if this is the last cell in the branch, branch from here next cycle
                         if (b == branchLength) {
@@ -155,7 +182,7 @@ public class LevelGenerator : MonoBehaviour {
         // actually build the aqueduct 
         for (int x = 0; x < MapTileWidth; x++) {
             for (int z = 0; z < MapTileWidth; z++) {
-                if (tiles[x, z].hasAqueduct) {
+                if (tiles[x, z].isAqueduct) {
                     GameObject prefab = GetAqueductPrefab(x, z, out float rotation);
                     GameObject newObj = PrefabUtility.InstantiatePrefab(prefab, AqueductParentTransform) as GameObject;
                     newObj.name = "Aqueduct (" + (x + 1) + "," + (z + 1) + ")";
@@ -168,10 +195,10 @@ public class LevelGenerator : MonoBehaviour {
     
     //------------------------------------------------------------------------------------------------------------------
     private GameObject GetAqueductPrefab(int x, int z, out float rotation) {
-        bool northCnxn = (z < MapTileWidth - 1) && (tiles[x, z + 1].hasAqueduct);
-        bool southCnxn = (z > 0) && (tiles[x, z - 1].hasAqueduct);
-        bool eastCnxn = (x < MapTileWidth - 1) && (tiles[x + 1, z].hasAqueduct);
-        bool westCnxn = (x > 0) && (tiles[x - 1, z].hasAqueduct);
+        bool northCnxn = (z < MapTileWidth - 1) && (tiles[x, z + 1].isAqueduct);
+        bool southCnxn = (z > 0) && (tiles[x, z - 1].isAqueduct);
+        bool eastCnxn = (x < MapTileWidth - 1) && (tiles[x + 1, z].isAqueduct);
+        bool westCnxn = (x > 0) && (tiles[x - 1, z].isAqueduct);
         int cnxnCount = (northCnxn ? 1 : 0) + (southCnxn ? 1 : 0) + (eastCnxn ? 1 : 0) + (westCnxn ? 1 : 0);
         rotation = 0f;
 
@@ -186,7 +213,7 @@ public class LevelGenerator : MonoBehaviour {
                 else if (westCnxn) {
                     rotation = 270f;
                 }
-                tiles[x, z].hasPit = true;
+                tiles[x, z].isPit = true;
                 return AqueductPrefab1Way;
             case 2:
                 if (northCnxn) {
@@ -229,10 +256,10 @@ public class LevelGenerator : MonoBehaviour {
     private void MakePillars() {
         for (int x = 0; x < MapTileWidth; x++) {
             for (int z = 0; z < MapTileWidth; z++) {
-                if (tiles[x, z].hasAqueduct && !tiles[x, z].hasPit && !HasAdjacentPillars(x, z)
+                if (tiles[x, z].isAqueduct && !tiles[x, z].isPit && !HasAdjacentPillars(x, z)
                     && Random.Range(0f, 1f) < pillarChance) {
                     
-                    tiles[x, z].hasPillar = true;
+                    tiles[x, z].isPillar = true;
                     GameObject newObj = PrefabUtility.InstantiatePrefab(PillarPrefab, PillarParentTransform) as GameObject;
                     newObj.name = "Pillar (" + (x + 1) + "," + (z + 1) + ")";
                     newObj.transform.position = new Vector3(x * TileWorldSize, 0, z * TileWorldSize);
@@ -242,17 +269,61 @@ public class LevelGenerator : MonoBehaviour {
     }
     
     //------------------------------------------------------------------------------------------------------------------
+    private bool IsValidCell(int x, int z) {
+        return (x >= 0) && (x < MapTileWidth) && (z >= 0) && (z < MapTileWidth);
+    }
+    
+    //------------------------------------------------------------------------------------------------------------------
     private bool HasAdjacentPillars(int x, int z) {
-        if (x > 0 && tiles[x - 1, z].hasPillar) {
+        if (x > 0 && tiles[x - 1, z].isPillar) {
             return true;
         }
-        if (x < MapTileWidth - 1 && tiles[x + 1, z].hasPillar) {
+        if (x < MapTileWidth - 1 && tiles[x + 1, z].isPillar) {
             return true;
         }
-        if (z > 0 && tiles[x, z - 1].hasPillar) {
+        if (z > 0 && tiles[x, z - 1].isPillar) {
             return true;
         }
-        if (z < MapTileWidth - 1 && tiles[x, z + 1].hasPillar) {
+        if (z < MapTileWidth - 1 && tiles[x, z + 1].isPillar) {
+            return true;
+        }
+        
+        return false;
+    }
+    
+    //------------------------------------------------------------------------------------------------------------------
+    private void MakeBuildings() {
+        for (int x = 0; x < MapTileWidth; x++) {
+            for (int z = 0; z < MapTileWidth; z++) {
+                if (tiles[x, z].isPit || tiles[x, z].isPillar || Random.Range(0f, 1f) > buildingChance
+                    || HasAdjacentBuildings(x, z)) {
+                    
+                    continue;
+                }
+                
+                GameObject newObj = PrefabUtility.InstantiatePrefab(
+                    BuildingPrefabs[Random.Range(0, BuildingPrefabs.Count)], BuildingParentTransform
+                ) as GameObject;
+                newObj.name = "Building (" + (x + 1) + "," + (z + 1) + ")";
+                newObj.transform.position = new Vector3(x * TileWorldSize, 0, z * TileWorldSize);
+                newObj.GetComponent<TerrainObject>().ModelPivot.Rotate(Vector3.up, Random.Range(0, 4) * 90f);
+                tiles[x, z].isBuilding = true;
+            }
+        }
+    }
+    
+    //------------------------------------------------------------------------------------------------------------------
+    private bool HasAdjacentBuildings(int x, int z) {
+        if (x > 0 && tiles[x - 1, z].isBuilding) {
+            return true;
+        }
+        if (x < MapTileWidth - 1 && tiles[x + 1, z].isBuilding) {
+            return true;
+        }
+        if (z > 0 && tiles[x, z - 1].isBuilding) {
+            return true;
+        }
+        if (z < MapTileWidth - 1 && tiles[x, z + 1].isBuilding) {
             return true;
         }
         

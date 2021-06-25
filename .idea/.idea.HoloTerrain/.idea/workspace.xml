@@ -17,8 +17,8 @@
       <list>
         <option value="$PROJECT_DIR$/Assets/Scripts/Generator.cs" />
         <option value="$PROJECT_DIR$/Assets/Scripts/TerrainObject.cs" />
-        <option value="$PROJECT_DIR$/Assets/Scripts/TerrainTile.cs" />
         <option value="$PROJECT_DIR$/Assets/Editor/LevelGeneratorInspector.cs" />
+        <option value="$PROJECT_DIR$/Assets/Scripts/TerrainTile.cs" />
         <option value="$PROJECT_DIR$/Assets/Scripts/LevelGenerator.cs" />
       </list>
     </option>
@@ -46,10 +46,10 @@
       </option>
       <method v="2" />
     </configuration>
-    <configuration name="Attach to Unity Editor" type="UNITY_DEBUG_RUN_CONFIGURATION" factoryName="Unity Debug" show_console_on_std_err="false" show_console_on_std_out="false" port="50000" address="localhost" ignored-value-for-modified-check="17172">
+    <configuration name="Attach to Unity Editor" type="UNITY_DEBUG_RUN_CONFIGURATION" factoryName="Unity Debug" show_console_on_std_err="false" show_console_on_std_out="false" port="50000" address="localhost">
       <option name="allowRunningInParallel" value="false" />
       <option name="listenPortForConnections" value="false" />
-      <option name="pid" value="17172" />
+      <option name="pid" />
       <option name="selectedOptions">
         <set />
       </option>
@@ -150,24 +150,5 @@
     </state>
     <state width="2517" height="207" key="GridCell.Tab.3.right/0.0.2560.1400/2560.0.2560.1400@0.0.2560.1400" timestamp="1624572199043" />
     <state width="2517" height="207" key="GridCell.Tab.3.right/0.0.2560.1400/2560.0.2560.1400@2560.0.2560.1400" timestamp="1624585249961" />
-  </component>
-  <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" type="DotNet Breakpoints">
-          <url>file://$PROJECT_DIR$/Assets/Scripts/LevelGenerator.cs</url>
-          <line>244</line>
-          <properties documentPath="D:\Crystal Lattice\Unity Projects\HoloTerrain\Assets\Scripts\LevelGenerator.cs" initialLine="227">
-            <startOffsets>
-              <option value="10356" />
-            </startOffsets>
-            <endOffsets>
-              <option value="10357" />
-            </endOffsets>
-          </properties>
-          <option name="timeStamp" value="3" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
   </component>
 </project>
